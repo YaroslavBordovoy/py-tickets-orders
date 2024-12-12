@@ -42,22 +42,24 @@ class MovieViewSet(viewsets.ModelViewSet):
         return [int(str_id) for str_id in query_string.split(",")]
 
     def get_queryset(self):
+        queryset = self.queryset
+
         genres = self.request.query_params.get("genres")
         actors = self.request.query_params.get("actors")
         title = self.request.query_params.get("title")
 
         if genres:
             genres = self._params_to_ints(genres)
-            self.queryset = self.queryset.filter(genres__id__in=genres)
+            queryset = queryset.filter(genres__id__in=genres)
 
         if actors:
             actors = self._params_to_ints(actors)
-            self.queryset = self.queryset.filter(actors__id__in=actors)
+            queryset = queryset.filter(actors__id__in=actors)
 
         if title:
-            self.queryset = self.queryset.filter(title__icontains=title)
+            queryset = queryset.filter(title__icontains=title)
 
-        return self.queryset.distinct()
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
@@ -74,18 +76,20 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
     serializer_class = MovieSessionSerializer
 
     def get_queryset(self):
+        queryset = self.queryset
+
         date = self.request.query_params.get("date")
         movie = self.request.query_params.get("movie")
 
         if date:
-            self.queryset = self.queryset.filter(show_time__date=date)
+            queryset = queryset.filter(show_time__date=date)
 
         if movie:
             movie_ids = [int(str_id) for str_id in movie.split(",")]
-            self.queryset = self.queryset.filter(movie__id__in=movie_ids)
+            queryset = queryset.filter(movie__id__in=movie_ids)
 
         if self.action == "list":
-            self.queryset = self.queryset.select_related(
+            queryset = queryset.select_related(
                 "cinema_hall",
                 "movie",
             ).annotate(
@@ -94,7 +98,7 @@ class MovieSessionViewSet(viewsets.ModelViewSet):
                 - Count("tickets")
             )
 
-        return self.queryset.distinct()
+        return queryset.distinct()
 
     def get_serializer_class(self):
         if self.action == "list":
